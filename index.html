@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuis Interaktif Sejarah Indonesia</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    /* Animasi halus untuk transisi jawaban */
+    .option-btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .option-btn:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- Header Banner -->
+  <header class="w-full bg-slate-800/80 backdrop-blur border-b border-slate-700 py-4 px-6 text-center sticky top-0 z-50">
+    <h1 class="text-xl md:text-2xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+      KUIS SEJARAH INDONESIA
+    </h1>
+    <p class="text-xs md:text-sm text-slate-400 mt-1">Masa VOC, Daendels, Raffles, Perang Pattimura, &amp; Perang Diponegoro</p>
+  </header>
+
+  <!-- Main Container -->
+  <main class="w-full max-w-3xl mx-auto p-4 md:p-6 flex-1 flex flex-col justify-center">
+
+    <!-- 1. SCREEN: FORM PENDAFTARAN & PENGATURAN -->
+    <div id="start-screen" class="bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 mb-3 text-3xl">
+          📜
+        </div>
+        <h2 class="text-2xl font-bold text-white">Uji Pengetahuan Sejarahmu</h2>
+        <p class="text-sm text-slate-400 mt-1">Selesaikan 25 soal sejarah dengan batas waktu pilihanmu.</p>
+      </div>
+
+      <div class="space-y-5">
+        <!-- Input Nama -->
+        <div>
+          <label for="player-name" class="block text-sm font-semibold text-slate-300 mb-2">Nama Pemain :</label>
+          <input 
+            type="text" 
+            id="player-name" 
+            placeholder="Masukkan nama lengkap / panggilan..." 
+            class="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 text-base"
+          >
+          <p id="name-error" class="text-rose-400 text-xs mt-1 hidden font-medium">Harap isi nama pemain terlebih dahulu!</p>
+        </div>
+
+        <!-- Pilihan Durasi -->
+        <div>
+          <label class="block text-sm font-semibold text-slate-300 mb-2">Pilih Durasi Per Soal :</label>
+          <div class="grid grid-cols-2 gap-4">
+            <label class="duration-option flex items-center justify-center gap-2 p-3.5 rounded-xl border border-slate-700 bg-slate-900/60 cursor-pointer hover:border-amber-500 transition">
+              <input type="radio" name="time-limit" value="15" class="accent-amber-500 w-4 h-4">
+              <span class="text-sm md:text-base font-semibold text-slate-200">⚡ 15 Detik (Cepat)</span>
+            </label>
+            <label class="duration-option flex items-center justify-center gap-2 p-3.5 rounded-xl border border-slate-700 bg-slate-900/60 cursor-pointer hover:border-amber-500 transition">
+              <input type="radio" name="time-limit" value="30" checked class="accent-amber-500 w-4 h-4">
+              <span class="text-sm md:text-base font-semibold text-slate-200">⏳ 30 Detik (Santai)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Aturan Singkat -->
+        <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700/60 text-xs text-slate-400 space-y-1">
+          <p class="font-semibold text-slate-300">Ketentuan Kuis:</p>
+          <p>• Soal dan urutan opsi pilihan selalu diacak setiap putaran.</p>
+          <p>• Jika waktu habis sebelum memilih, jawaban benar akan ditunjukkan otomatis.</p>
+          <p>• Skor akhir dihitung dengan rumus: <span class="text-amber-400 font-mono">(Benar / 25) × 100</span>.</p>
+        </div>
+
+        <!-- Tombol Mulai -->
+        <button 
+          id="btn-start" 
+          class="w-full py-3.5 px-6 rounded-xl font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 active:scale-[0.99] shadow-lg shadow-amber-500/20 transition cursor-pointer text-base"
+        >
+          Mulai Kuis Sekarang
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. SCREEN: ARENA KUIS -->
+    <div id="quiz-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl relative">
+      <!-- Info Header Kuis -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-700">
+        <div>
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-bold block">Pemain</span>
+          <span id="current-player" class="text-base font-semibold text-amber-400 truncate max-w-[150px] inline-block">Nama</span>
+        </div>
+
+        <!-- Soal Indicator -->
+        <div class="text-center">
+          <span class="text-xs uppercase tracking-wider text-slate-400 font-bold block">Nomor Soal</span>
+          <span id="question-progress" class="text-base font-bold text-white">1 / 25</span>
+        </div>
+
+        <!-- Countdown Timer -->
+        <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 px-3.5 py-1.5 rounded-full">
+          <span class="text-sm">⏱️</span>
+          <span id="timer-display" class="font-mono text-base font-bold text-amber-400 min-w-[28px] text-right">30s</span>
+        </div>
+      </div>
+
+      <!-- Progress Bar Waktu -->
+      <div class="w-full bg-slate-900 h-2 rounded-full mt-4 overflow-hidden">
+        <div id="timer-bar" class="bg-amber-400 h-full w-full transition-all duration-100 ease-linear"></div>
+      </div>
+
+      <!-- Kotak Pertanyaan -->
+      <div class="my-6">
+        <h3 id="question-text" class="text-lg md:text-xl font-semibold text-slate-100 leading-relaxed min-h-[64px] flex items-center">
+          Pertanyaan sedang dimuat...
+        </h3>
+      </div>
+
+      <!-- Pilihan Jawaban -->
+      <div id="options-container" class="grid grid-cols-1 gap-3.5">
+        <!-- Opsi tombol di-generate dinamis oleh JS -->
+      </div>
+
+      <!-- Status Feedback Singkat -->
+      <div id="feedback-msg" class="mt-4 text-center text-sm font-semibold min-h-[22px] transition-opacity"></div>
+    </div>
+
+    <!-- 3. SCREEN: REVIEW & HASIL AKHIR -->
+    <div id="result-screen" class="hidden bg-slate-800 border border-slate-700 rounded-2xl p-6 md:p-8 shadow-2xl">
+      <!-- Ringkasan Nilai -->
+      <div class="text-center pb-6 border-b border-slate-700">
+        <span class="inline-block px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold tracking-wide uppercase mb-2">
+          Hasil Kuis
+        </span>
+        <h2 class="text-2xl md:text-3xl font-extrabold text-white">Kuis Sejarah Indonesia</h2>
+        <p class="text-slate-400 text-sm mt-1">Laporan pencapaian untuk: <span id="summary-player" class="font-bold text-slate-200"></span></p>
+
+        <!-- Kartu Skor -->
+        <div class="mt-6 inline-flex flex-col items-center justify-center p-6 bg-slate-900/90 border border-slate-700 rounded-2xl min-w-[220px]">
+          <span class="text-xs uppercase font-semibold text-slate-400">Total Skor Akhir</span>
+          <span id="summary-score" class="text-5xl font-black text-amber-400 my-1 font-mono">100</span>
+          <span id="summary-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">Luar Biasa!</span>
+        </div>
+
+        <div class="flex justify-center gap-6 mt-4 text-sm">
+          <div class="text-emerald-400 font-semibold">✓ Benar: <span id="summary-correct" class="font-mono font-bold">0</span></div>
+          <div class="text-rose-400 font-semibold">✗ Salah / Lewat: <span id="summary-wrong" class="font-mono font-bold">0</span></div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <button id="btn-restart" class="px-6 py-2.5 rounded-xl font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition cursor-pointer text-sm shadow">
+            🔄 Mainkan Kuis Lagi
+          </button>
+        </div>
+      </div>
+
+      <!-- Review Soal & Jawaban -->
+      <div class="mt-6">
+        <h3 class="text-lg font-bold text-white mb-3 flex items-center justify-between">
+          <span>Rincian Pembahasan Soal</span>
+          <span class="text-xs text-slate-400 font-normal">25 Soal</span>
+        </h3>
+        <div id="review-list" class="space-y-4 max-h-[480px] overflow-y-auto pr-2">
+          <!-- Item review di-generate via JavaScript -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-4 text-center text-xs text-slate-500 border-t border-slate-800">
+    &copy; Kuis Interaktif Sejarah Indonesia &bull; 25 Soal Lengkap
+  </footer>
+
+  <!-- SCRIPT LOGIKA KUIS -->
+  <script>
+    // Data Lengkap 25 Soal Sesuai Dokumen
+    const MASTER_QUESTIONS = [
+      {
+        question: "Harga dan jenis tanaman ditentukan oleh VOC merupakan isi dari peraturan ..",
+        options: ["Hongi Tichten.", "Ekstirvasi.", "Monopoli.", "Contingenten."],
+        answer: "Monopoli."
+      },
+      {
+        question: "Peraturan yang mewajibkan rakyat menjual hasil bumi hanya kepada VOC dengan harga yang telah ditentukan pemerintah VOC Adalah peraturan..",
+        options: ["Hongi Tichten.", "Ekstirvasi.", "Verplichte Leverantie.", "Contingenten."],
+        answer: "Verplichte Leverantie."
+      },
+      {
+        question: "VOC dibubarkan tahun 1799 pada masa pemerintahan gubernur jenderal...",
+        options: ["Jan Pieterzoon Coen.", "Pieter Gerardus.", "Pieter Both.", "Van Olden barnevelt."],
+        answer: "Pieter Gerardus."
+      },
+      {
+        question: "Berikut Adalah sebab-sebab VOC dibubarkan tahun 1799 kecuali..",
+        options: [
+          "Korupsi yang dilakukan oleh pegawai VOC.",
+          "Maraknya penyeludupan di wilayah kekuasaan VOC.",
+          "Biaya perang melawan perlawanan rakyat Indonesia yang sangat besar.",
+          "Kekalahan pasukan VOC terhadap perlawanan Diponegoro."
+        ],
+        answer: "Kekalahan pasukan VOC terhadap perlawanan Diponegoro."
+      },
+      {
+        question: "Untuk mempertahankan harga rempah-rempah tetap tinggi di pasaran Eropa, VOC memberlakukan...",
+        options: ["Hongi Tochten.", "Contingenten.", "Ekstirpasi.", "Verplichte Leverantie."],
+        answer: "Ekstirpasi."
+      },
+      {
+        question: "Raja Belanda yang membubarkan VOC tahun 1799 adalah...",
+        options: ["Louis Napoleon.", "William.", "Wilhelmina.", "Napoleon Bonaparte."],
+        answer: "Louis Napoleon."
+      },
+      {
+        question: "Gubernur Jenderal yang bertugas mempertahankan Pulau Jawa dari serangan Inggris adalah...",
+        options: ["Herman William Daendels.", "Jansen.", "Thomas Stamford Raffles.", "Van Den Bosch."],
+        answer: "Herman William Daendels."
+      },
+      {
+        question: "Pembangunan jalan Raya dari Anyer sampai Panarukan oleh Gubernur Jenderal Daendels dilakukan melalui...",
+        options: ["Rodi.", "Romusa.", "Prianger Stelsel.", "Verplichte."],
+        answer: "Rodi."
+      },
+      {
+        question: "Penjajahan Inggris di Indonesia berlangsung sejak ditandatanganinya perjanjian...",
+        options: ["Tuntang.", "London.", "Versailles.", "Saragoza."],
+        answer: "Tuntang."
+      },
+      {
+        question: "Buku berjudul History Of Java ditulis oleh...",
+        options: ["Thomas Stamford Rafless.", "Van Den Bosch.", "Herman William Dandels.", "Jansen."],
+        answer: "Thomas Stamford Rafless."
+      },
+      {
+        question: "Penjajahan Inggris berakhir di Indonesia tahun 1814 sejak ditandatanganinya perjanjian...",
+        options: ["Tuntang.", "Kalijati.", "London.", "Linggar Jati."],
+        answer: "London."
+      },
+      {
+        question: "Yang tidak termasuk tindakan Thomas Stamford Rafless di Indonesia adalah...",
+        options: [
+          "Membagi Jawa dalam 16 Keresidenan.",
+          "Melaksanakan Land Rente.",
+          "Menulis Buku History Of Java.",
+          "Melaksanakan Kerja Paksa."
+        ],
+        answer: "Melaksanakan Kerja Paksa."
+      },
+      {
+        question: "Karena tindakannya yang kejam Herman William Daendles dipanggil pulang ke Belanda dan digantikan oleh gubernur Jenderal..",
+        options: ["Rafles.", "Pieter Both.", "Yansen.", "Vanden Bosch."],
+        answer: "Yansen."
+      },
+      {
+        question: "Berikut adalah Tindakan Gubernur Jenderal Herman William Daendles di Indonesia, kecuali...",
+        options: [
+          "Membangun jalan raya dari Anyer sampai panarukan melalui kerja paksa (Rodi)",
+          "Membangun pangkalan militer di merak dan ujung kulon",
+          "Membangun pabrik senjata di Semarang",
+          "Menjalankan Land rente."
+        ],
+        answer: "Menjalankan Land rente."
+      },
+      {
+        question: "Peraturan yang mewajibkan rakyat Priangan untuk menanam Kopi adalah....",
+        options: ["Cultuur Stelsel.", "Prianger Stelsel.", "Contingenten.", "Land rente."],
+        answer: "Prianger Stelsel."
+      },
+      {
+        question: "Berikut Adalah pemimpin perang rakyat Maluku (Perang Pattimura) terhadap kolonial Belanda, kecuali...",
+        options: ["Tomas Mattulesia.", "Philip Latumahina.", "Said Parintah.", "Kaki ali."],
+        answer: "Kaki ali."
+      },
+      {
+        question: "Pemimpin perang dari Maluku yang dijuluki sebagai Mutiara dari Timur Adalah...",
+        options: ["Anthoni Rebok.", "Philip Matuhina.", "Pattimura.", "Cristina Martha Tiahahu."],
+        answer: "Cristina Martha Tiahahu."
+      },
+      {
+        question: "Perang Pattimura (Perang Maluku) diawali dengan penyerangan rakyat Maluku ke benteng pertahanan Belanda....",
+        options: ["Duurstede.", "Victoria.", "Speelman.", "Vanden."],
+        answer: "Duurstede."
+      },
+      {
+        question: "Martha Tiahahu berhasil ditangkap Belanda dan dibuang ke...",
+        options: ["Sumatera.", "Pulau Kalimantan.", "Pulau Jawa.", "Sulawesi."],
+        answer: "Pulau Jawa."
+      },
+      {
+        question: "Tgl 16 Mei 1817 rakyat Maluku berhasil menguasai benteng pertahanan Belanda dan menembak mati residen Belanda.....",
+        options: ["Vanden Bosch.", "Van de berg.", "Van Mourich.", "Van Basten."],
+        answer: "Van de berg."
+      },
+      {
+        question: "Cikal bakal atau latar belakang Perang Diponegoro adalah kehadiran gubernur jenderal di pulau jawa bernama....",
+        options: ["Pieter Both.", "J.P.Coen.", "Herman William Dandels.", "Rafless."],
+        answer: "Herman William Dandels."
+      },
+      {
+        question: "Pemimipin perang Jawa melawan Belanda tahun 1825 - 1830 adalah..",
+        options: ["Pangeran Puger.", "Pattimura.", "Pangeran Purbaya.", "Pengeran Diponegoro."],
+        answer: "Pengeran Diponegoro."
+      },
+      {
+        question: "Strategi yang dijalankan Belanda untuk menaklukkan perlawanan Diponegro adalah politik...",
+        options: ["Stelsel.", "Akal Licik.", "Benteng Stelsel.", "Marsose."],
+        answer: "Benteng Stelsel."
+      },
+      {
+        question: "Pangeran Diponegoro dibuang oleh Belanda ke.....",
+        options: ["Kalimantan.", "Padang.", "Parapat.", "Manado."],
+        answer: "Manado."
+      },
+      {
+        question: "Sebab utama terjadinya Perang Diponegoro adalah...",
+        options: [
+          "Belanda membangun jalan diatas makam leluhur Diponegoro.",
+          "Pelayaran Hongi.",
+          "Hukum Tawan Karang.",
+          "Monopoli Belanda."
+        ],
+        answer: "Belanda membangun jalan diatas makam leluhur Diponegoro."
+      }
+    ];
+
+    // Helper: Fisher-Yates Shuffle
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    // State Aplikasi
+    let playerName = "";
+    let timePerQuestion = 30; // detik
+    let activeQuestions = [];
+    let currentIndex = 0;
+    let timerInterval = null;
+    let timeRemaining = 0;
+    let isAnswerLocked = false;
+    let userAnswers = []; // Menyimpan riwayat jawaban untuk review
+
+    // Elemen DOM
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const inputPlayerName = document.getElementById('player-name');
+    const nameError = document.getElementById('name-error');
+    const btnStart = document.getElementById('btn-start');
+    const btnRestart = document.getElementById('btn-restart');
+
+    const currentPlayerText = document.getElementById('current-player');
+    const questionProgressText = document.getElementById('question-progress');
+    const timerDisplayText = document.getElementById('timer-display');
+    const timerBar = document.getElementById('timer-bar');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const feedbackMsg = document.getElementById('feedback-msg');
+
+    // Mulai Kuis
+    btnStart.addEventListener('click', () => {
+      const name = inputPlayerName.value.trim();
+      if (!name) {
+        nameError.classList.remove('hidden');
+        inputPlayerName.focus();
+        return;
+      }
+      nameError.classList.add('hidden');
+      playerName = name;
+
+      // Ambil opsi waktu
+      const selectedTime = document.querySelector('input[name="time-limit"]:checked');
+      timePerQuestion = selectedTime ? parseInt(selectedTime.value) : 30;
+
+      // Setup Soal & Pilihan yang Teracak
+      activeQuestions = shuffleArray(MASTER_QUESTIONS).map(q => ({
+        question: q.question,
+        answer: q.answer,
+        shuffledOptions: shuffleArray(q.options)
+      }));
+
+      currentIndex = 0;
+      userAnswers = [];
+      currentPlayerText.textContent = playerName;
+
+      // Tampilkan Arena Kuis
+      startScreen.classList.add('hidden');
+      resultScreen.classList.add('hidden');
+      quizScreen.classList.remove('hidden');
+
+      loadQuestion(currentIndex);
+    });
+
+    // Memuat Soal Tertentu
+    function loadQuestion(index) {
+      if (index >= activeQuestions.length) {
+        showResults();
+        return;
+      }
+
+      isAnswerLocked = false;
+      feedbackMsg.textContent = "";
+      feedbackMsg.className = "mt-4 text-center text-sm font-semibold min-h-[22px]";
+
+      const item = activeQuestions[index];
+      questionProgressText.textContent = `${index + 1} / ${activeQuestions.length}`;
+      questionText.textContent = `${index + 1}. ${item.question}`;
+
+      // Buat Opsi Tombol
+      optionsContainer.innerHTML = "";
+      const alphabet = ['A', 'B', 'C', 'D'];
+
+      item.shuffledOptions.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = "option-btn w-full text-left p-4 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-slate-700/60 text-slate-100 font-medium text-sm md:text-base flex items-start gap-3 cursor-pointer select-none";
+        
+        btn.innerHTML = `
+          <span class="w-6 h-6 flex-shrink-0 rounded-full bg-slate-800 text-slate-300 border border-slate-600 flex items-center justify-center text-xs font-bold font-mono">
+            ${alphabet[idx] || (idx + 1)}
+          </span>
+          <span class="flex-1 text-slate-100 leading-snug">${opt}</span>
+        `;
+
+        btn.addEventListener('click', () => handleSelectAnswer(opt, btn));
+        optionsContainer.appendChild(btn);
+      });
+
+      // Mulai Timer
+      startTimer();
+    }
+
+    // Hitung Mundur Timer
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeRemaining = timePerQuestion;
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerUI();
+
+        if (timeRemaining <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      timerDisplayText.textContent = `${timeRemaining}s`;
+      const pct = (timeRemaining / timePerQuestion) * 100;
+      timerBar.style.width = `${Math.max(0, pct)}%`;
+
+      // Visualisasi warna timer
+      if (timeRemaining <= 5) {
+        timerDisplayText.className = "font-mono text-base font-bold text-rose-400 min-w-[28px] text-right animate-pulse";
+        timerBar.className = "bg-rose-500 h-full transition-all duration-100 ease-linear";
+      } else {
+        timerDisplayText.className = "font-mono text-base font-bold text-amber-400 min-w-[28px] text-right";
+        timerBar.className = "bg-amber-400 h-full transition-all duration-100 ease-linear";
+      }
+    }
+
+    // Menangani Jawaban yang Dipilih Pengguna
+    function handleSelectAnswer(selectedText, chosenBtn) {
+      if (isAnswerLocked) return;
+      isAnswerLocked = true;
+      clearInterval(timerInterval);
+
+      const currentQ = activeQuestions[currentIndex];
+      const isCorrect = (selectedText.trim() === currentQ.answer.trim());
+
+      // Simpan jawaban untuk review
+      userAnswers.push({
+        question: currentQ.question,
+        userPick: selectedText,
+        correctAnswer: currentQ.answer,
+        isCorrect: isCorrect,
+        isTimeOut: false
+      });
+
+      // Kunci semua tombol dan warnai
+      const buttons = optionsContainer.querySelectorAll('.option-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('cursor-not-allowed', 'opacity-90');
+        const text = btn.querySelector('span:last-child').textContent.trim();
+
+        if (text === currentQ.answer.trim()) {
+          // Warna Hijau untuk Jawaban Benar (Teks Putih Kontras Tinggi)
+          btn.classList.remove('bg-slate-900/80', 'border-slate-700', 'text-slate-100');
+          btn.classList.add('bg-emerald-600', 'border-emerald-400', 'text-white', 'font-bold', 'shadow-md', 'shadow-emerald-900/30');
+          const badge = btn.querySelector('span:first-child');
+          badge.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
+          badge.classList.add('bg-emerald-800', 'text-white', 'border-emerald-300');
+        } else if (btn === chosenBtn && !isCorrect) {
+          // Warna Merah untuk Jawaban Salah yang Dipilih (Teks Putih Kontras Tinggi)
+          btn.classList.remove('bg-slate-900/80', 'border-slate-700', 'text-slate-100');
+          btn.classList.add('bg-rose-600', 'border-rose-400', 'text-white', 'font-bold', 'shadow-md', 'shadow-rose-900/30');
+          const badge = btn.querySelector('span:first-child');
+          badge.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
+          badge.classList.add('bg-rose-800', 'text-white', 'border-rose-300');
+        }
+      });
+
+      // Tampilkan feedback text singkat
+      if (isCorrect) {
+        feedbackMsg.textContent = "✓ Jawaban Benar!";
+        feedbackMsg.classList.add('text-emerald-400');
+      } else {
+        feedbackMsg.textContent = "✗ Jawaban Kurang Tepat!";
+        feedbackMsg.classList.add('text-rose-400');
+      }
+
+      // Jeda 1.8 detik sebelum lanjut ke soal berikutnya
+      setTimeout(() => {
+        currentIndex++;
+        loadQuestion(currentIndex);
+      }, 1800);
+    }
+
+    // Menangani Kondisi Waktu Habis
+    function handleTimeOut() {
+      if (isAnswerLocked) return;
+      isAnswerLocked = true;
+
+      const currentQ = activeQuestions[currentIndex];
+
+      // Simpan riwayat bahwa waktu habis
+      userAnswers.push({
+        question: currentQ.question,
+        userPick: "Waktu Habis (Tidak Menjawab)",
+        correctAnswer: currentQ.answer,
+        isCorrect: false,
+        isTimeOut: true
+      });
+
+      // Tunjukkan jawaban yang benar dengan warna hijau
+      const buttons = optionsContainer.querySelectorAll('.option-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('cursor-not-allowed', 'opacity-90');
+        const text = btn.querySelector('span:last-child').textContent.trim();
+
+        if (text === currentQ.answer.trim()) {
+          btn.classList.remove('bg-slate-900/80', 'border-slate-700', 'text-slate-100');
+          btn.classList.add('bg-emerald-600', 'border-emerald-400', 'text-white', 'font-bold', 'shadow-md', 'shadow-emerald-900/30');
+          const badge = btn.querySelector('span:first-child');
+          badge.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-600');
+          badge.classList.add('bg-emerald-800', 'text-white', 'border-emerald-300');
+        }
+      });
+
+      feedbackMsg.textContent = "⏱️ Waktu Habis! Jawaban yang benar telah ditandai.";
+      feedbackMsg.classList.add('text-amber-400');
+
+      setTimeout(() => {
+        currentIndex++;
+        loadQuestion(currentIndex);
+      }, 2000);
+    }
+
+    // Tampilkan Layar Skor & Review
+    function showResults() {
+      clearInterval(timerInterval);
+      quizScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+
+      const totalQuestions = activeQuestions.length;
+      const totalCorrect = userAnswers.filter(ans => ans.isCorrect).length;
+      const totalWrong = totalQuestions - totalCorrect;
+
+      // Rumus: (Jumlah Benar / Total Soal) * 100
+      const finalScore = Math.round((totalCorrect / totalQuestions) * 100);
+
+      document.getElementById('summary-player').textContent = playerName;
+      document.getElementById('summary-score').textContent = finalScore;
+      document.getElementById('summary-correct').textContent = totalCorrect;
+      document.getElementById('summary-wrong').textContent = totalWrong;
+
+      // Label Predikat Skor
+      const badge = document.getElementById('summary-badge');
+      if (finalScore >= 85) {
+        badge.textContent = "🌟 Sangat Istimewa!";
+        badge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+      } else if (finalScore >= 70) {
+        badge.textContent = "👍 Hebat!";
+        badge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1 bg-amber-500/20 text-amber-400 border border-amber-500/30";
+      } else {
+        badge.textContent = "📚 Perlu Belajar Lagi";
+        badge.className = "text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1 bg-rose-500/20 text-rose-400 border border-rose-500/30";
+      }
+
+      // Generate Daftar Review Soal
+      const reviewList = document.getElementById('review-list');
+      reviewList.innerHTML = "";
+
+      userAnswers.forEach((item, idx) => {
+        const itemBox = document.createElement('div');
+        itemBox.className = `p-4 rounded-xl border text-sm ${
+          item.isCorrect 
+            ? 'bg-slate-900/60 border-emerald-500/30' 
+            : 'bg-slate-900/60 border-rose-500/30'
+        }`;
+
+        const isWrongPick = !item.isCorrect;
+
+        itemBox.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <p class="font-semibold text-slate-200">
+              <span class="text-slate-400 font-mono">${idx + 1}.</span> ${item.question}
+            </p>
+            <span class="text-xs px-2 py-0.5 rounded font-bold flex-shrink-0 ${
+              item.isCorrect 
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+            }">
+              ${item.isCorrect ? 'BENAR' : (item.isTimeOut ? 'WAKTU HABIS' : 'SALAH')}
+            </span>
+          </div>
+
+          <div class="mt-3 space-y-1.5 text-xs md:text-sm pl-2 border-l-2 ${item.isCorrect ? 'border-emerald-500' : 'border-rose-500'}">
+            <div class="flex items-start gap-1">
+              <span class="text-slate-400 min-w-[130px]">Jawaban Anda:</span>
+              <span class="font-semibold ${item.isCorrect ? 'text-emerald-400' : 'text-rose-400'}">
+                ${item.userPick}
+              </span>
+            </div>
+            ${
+              isWrongPick 
+                ? `<div class="flex items-start gap-1">
+                    <span class="text-slate-400 min-w-[130px]">Jawaban Benar:</span>
+                    <span class="font-bold text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800">
+                      ${item.correctAnswer}
+                    </span>
+                   </div>` 
+                : ''
+            }
+          </div>
+        `;
+
+        reviewList.appendChild(itemBox);
+      });
+    }
+
+    // Tombol Ulangi Kuis
+    btnRestart.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      resultScreen.classList.add('hidden');
+      quizScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      inputPlayerName.value = "";
+    });
+  </script>
+</body>
+</html>
